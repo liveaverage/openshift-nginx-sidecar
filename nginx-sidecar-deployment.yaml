@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sidecar
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: sidecar
+  template:
+    metadata:
+      labels:
+        app: sidecar
+    spec:
+      containers:
+        - name: httpbin
+          imagePullPolicy: Always
+          image: quay.io/shifti/httpbin-ubi:0.9.2
+        - image: quay.io/shifti/nplus-adc-ubi:r.24.2
+          imagePullPolicy: Always
+          name: nginx
+          ports:
+            - containerPort: 80
+          resources:
+            limits:
+              cpu: 300m
+              memory: 512Mi
+            requests:
+              cpu: 200m
+              memory: 256Mi
+          volumeMounts:
+          - mountPath: /etc/nginx/conf.d
+            name: conf
+          - mountPath: /etc/nginx/conf
+            name: jwk
+      volumes:
+      - name: conf
+        configMap:
+          name: nginx
+      - name: jwk
+        configMap:
+          name: jwk
+  strategy:
+        type: RollingUpdate
+        rollingUpdate:
+            maxUnavailable: 0
