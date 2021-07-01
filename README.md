@@ -14,6 +14,7 @@ cd openshift-nginx-sidecar/
 
 oc new-project sidecar
 
+# Establish a pull secret for accessing Iron Bank
 oc create secret docker-registry external-registry --docker-username=<your_username> --docker-password=<your_harbor_key> --docker-server=registry1.dso.mil
 oc secrets link default external-registry --for=pull
 ```
@@ -45,6 +46,8 @@ oc scale deployment/sidecar --replicas=0; sleep 8; oc scale deployment/sidecar -
 # Access httpbin
 echo "httpbin available at: http://${ROUTE}"
 
+# Smoke test
+curl -X GET "http://${ROUTE}/get" -H  "accept: application/json" -v
 ```
 
 # Advanced Usage
