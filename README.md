@@ -4,16 +4,28 @@ A quick example of using NGINX as an independent sidecar proxy in front of your 
 
 # Usage
 
-Initial deployment:
+This example requires access to Iron Bank, DoD Centralized Artifacts Repository (DCAR), which hosts a trial NGINX Plus image for the advanced usage example below.
+
+Prerequisites:
 
 ```
+git clone https://github.com/liveaverage/openshift-nginx-sidecar.git
+cd openshift-nginx-sidecar/
+
 oc new-project sidecar
+
+oc create secret docker-registry external-registry --docker-username=<your_username> --docker-password=<your_harbor_key> --docker-server=registry1.dso.mil
+oc secrets link default external-registry --for=pull
+```
+
+Initial Deployment:
+```
 oc create configmap nginx --from-file=default.conf=nginx-sidecar-proxy.conf
 oc create configmap jwk --from-file=api_secret.jwk=nginx-sidecar-api.jwk
 oc apply -f nginx-sidecar-deployment.yaml 
 ```
 
-Expose the service using OpenShift Router:
+Expose the NGINX service using OpenShift Router:
 
 ```
 oc expose deployment sidecar --port=8080
@@ -37,6 +49,8 @@ echo "httpbin available at: http://${ROUTE}"
 
 # Advanced Usage
 
+> NOTE: Use of [JWT Authentication](https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-jwt-authentication/) requires an NGINX Plus Release R10 or higher 
+
 Using JWT as an API key, based on the example here: https://www.nginx.com/blog/authenticating-api-clients-jwt-nginx-plus/
 
 ```
@@ -56,4 +70,4 @@ curl -X GET "http://${ROUTE}/get" -H  "accept: application/json" -v
 
 ## Test with JWT; confirm response 200:
 curl -X GET "http://${ROUTE}/get" -H  "accept: application/json" -H "Authorization: Bearer `cat nginx-sidecar.jwt`" -v
-
+```
